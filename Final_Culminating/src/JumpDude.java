@@ -16,25 +16,29 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	// Images
 	public static BufferedImage menu;
 	public static BufferedImage player;
+	public static BufferedImage jumpIndicator;
 	
+	// Player Stats
 	public static int playerX = 50;
 	public static int playerY = 500;
-	public static boolean jump = false;
+	public static int height = 500;
+	public static boolean grounded = true;
 	public static int fallingSpeed = 0;
 	
+	// Levels (Placeholders)
 	public static BufferedImage level1;
 	public static BufferedImage level2;
 	public static BufferedImage Level3;
 	public static BufferedImage level4;
 	public static BufferedImage level5;
+	
+	// Collision arrays
 	public static int[] wallArrX = {};
 	public static int[] wallArrY = {};
 	
-	
+	// Gamestate
 	public static int gameState = 0;
-	
-	public static double startTime, endTime, holdTime;
-	boolean flag = false;
+
 	
 	
 	public JumpDude() {
@@ -42,13 +46,16 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		setBackground(new Color(255, 255, 255));
 		
 		try {
+			// Initialize Variables
 			menu = ImageIO.read(new File("menu.png"));
 			player = ImageIO.read(new File("testPlayer.png"));
+			jumpIndicator = ImageIO.read(new File("jumpIndicator1.png"));
 		}
 		catch(Exception e) {
 			System.out.println("IMAGE NOT FOUND");
 		}
 		
+		// Create Thread
 		Thread thread = new Thread(this);
 		thread.start();
 		
@@ -65,12 +72,12 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	}
 	
 	public static void updatePlayer() {
-		if(jump) {
-			playerY += fallingSpeed + holdTime ;
+		if(grounded == false) {
+			playerY += fallingSpeed;
 			fallingSpeed += 1;
-			if(playerY >= 500) {
-				playerY = 500;
-				jump = false;
+			if(playerY >= height) {
+				playerY = height;
+				grounded = true;
 				fallingSpeed = 0;
 			}
 		}
@@ -78,21 +85,26 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	
 	public void paintComponent(Graphics g) {
 		
+		// Clears screen
 		super.paintComponent(g);
 		
+		// Menu screen
 		if(gameState == 0) {
 			g.drawImage(menu, 0, 0, null);
 			
 		}
+		// Level 1
 		if(gameState == 1) {
 			g.drawImage(player, playerX, playerY, null);
 			g.drawLine(1, 400, 50, 400);
+			g.drawImage(jumpIndicator, 0, 0, null);
+			
 		}
 		
 		
 	}
 	
-
+	// Run method updates every frame
 	public void run() {
 		while(true) {
 			repaint();
@@ -114,6 +126,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 
 	@Override
 	public void keyPressed(KeyEvent e) {
+		// If menu screen 
 		if(gameState == 0) {
 			if(e.getKeyChar() == ' ') {
 				gameState = 1;
@@ -122,9 +135,20 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		else if(gameState == 1) {
 			if(e.getKeyChar() == ' ') {
-				startTime = System.nanoTime();
-				flag = true;
-				
+				if(grounded) {
+					fallingSpeed = 0;
+					fallingSpeed -= 20;
+					grounded = false;
+				}
+			}
+			if(e.getKeyCode() == 49) {
+				height = 500;
+			}
+			if(e.getKeyCode() == 50) {
+				height -= 100;
+			}
+			if(e.getKeyCode() == 51) {
+				height -= 200;
 			}
 		}
 		
@@ -132,18 +156,6 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		if(flag) {
-			endTime = System.nanoTime();
-			flag = false;
-		}
-		holdTime = (endTime - startTime) / Math.pow(10, 6);
-		System.out.println(holdTime);
-		if(e.getKeyChar() == ' ') {
-			fallingSpeed = 0;
-			fallingSpeed -= 20;
-			holdTime = 0;
-			jump = true;
-		}
 	}
 	
 	public static boolean collision(int playerX, int playerY, int[] wallArrX, int[] wallArrY) {
@@ -159,9 +171,6 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	// To check for slope direction
 	public static double getAngle(int x1, int y1, int x2, int y2) {
 		return Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
-	}
-	public static int pointInBetween(int x1, int x2) {
-		return (Integer) null;
 	}
 }
 // https://medium.com/@brazmogu/physics-for-game-dev-a-platformer-physics-cheatsheet-f34b09064558
