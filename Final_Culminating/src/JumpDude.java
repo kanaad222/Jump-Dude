@@ -49,7 +49,8 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			// Initialize Variables
 			menu = ImageIO.read(new File("menu.png"));
 			player = ImageIO.read(new File("testPlayer.png"));
-			jumpIndicator = ImageIO.read(new File("jumpIndicator1.png"));
+			jumpIndicator = ImageIO.read(new File("jumpIndicator2.png"));
+			level1 = ImageIO.read(new File("S1.1.jpg"));
 		}
 		catch(Exception e) {
 			System.out.println("IMAGE NOT FOUND");
@@ -76,7 +77,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			playerY += fallingSpeed;
 			fallingSpeed += 1;
 			if(playerY >= height) {
-				playerY = height;
+				playerY = playerY;  
 				grounded = true;
 				fallingSpeed = 0;
 			}
@@ -95,6 +96,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		// Level 1
 		if(gameState == 1) {
+			g.drawImage(level1, 0, 0, null);
 			g.drawImage(player, playerX, playerY, null);
 			g.drawLine(1, 400, 50, 400);
 			g.drawImage(jumpIndicator, 0, 0, null);
@@ -145,10 +147,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				height = 500;
 			}
 			if(e.getKeyCode() == 50) {
-				height -= 100;
+				height = 600;
 			}
 			if(e.getKeyCode() == 51) {
-				height -= 200;
+				height = 700;
 			}
 		}
 		
@@ -173,4 +175,3 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		return Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
 	}
 }
-// https://medium.com/@brazmogu/physics-for-game-dev-a-platformer-physics-cheatsheet-f34b09064558
