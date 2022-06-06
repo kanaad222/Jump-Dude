@@ -1,12 +1,11 @@
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.time.*;
-
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -15,7 +14,8 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	
 	// Images
 	public static BufferedImage menu;
-	public static BufferedImage player;
+	public static BufferedImage playerRight;
+	public static BufferedImage playerLeft;
 	public static BufferedImage player2;
 	public static BufferedImage player3;
 	public static BufferedImage player4;
@@ -25,8 +25,16 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static int playerX = 100;
 	public static int playerY = 560;
 	public static int height = 560;
-	public static boolean grounded = true;
+	public static boolean jump = true;
 	public static int fallingSpeed = 0;
+	public static int speed = 0;
+	// 1 for right and -1 for left
+	public static int direction = 1;
+	
+	// Hitboxes
+	public static int playerXHitBox = playerX;
+	public static int playerYHitBox = playerY;
+	public static int player2YHitBox = playerY;
 	
 	// Levels (Place holders)
 	public static BufferedImage level1;
@@ -52,9 +60,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			// Initialize Variables
 			menu = ImageIO.read(new File("menu.png"));
 			level1 = ImageIO.read(new File("S1.1.jpg"));
-			player = ImageIO.read(new File("Character Sprite1.png"));
+			playerRight = ImageIO.read(new File("Character Sprite1.png"));
+			playerLeft = ImageIO.read(new File("Character Sprite3.png"));
 			player2 = ImageIO.read(new File("Character Sprite2.png"));
-			jumpIndicator = ImageIO.read(new File("jumpIndicator1.png"));
+			jumpIndicator = ImageIO.read(new File("jumpIndicator2.png"));
 		}
 		catch(Exception e) {
 			System.out.println("IMAGE NOT FOUND");
@@ -77,16 +86,21 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	}
 	
 	public static void updatePlayer() {
-		if(grounded == false) {
+		if(jump == false) {
+			if(!jump) {playerX = playerX + 5 * direction;
+			playerXHitBox = playerXHitBox + 5 * direction;}
 			playerY += fallingSpeed;
+			player2YHitBox += fallingSpeed;
 			fallingSpeed += 1;
-			if(playerY >= height) {
+			if(playerY >= height && player2YHitBox >= height) {
 				playerY = height;
-				grounded = true;
+				player2YHitBox = height;
+				jump = true;
 				fallingSpeed = 0;
 			}
 		}
 	}
+	
 	
 	public void paintComponent(Graphics g) {
 		
@@ -101,20 +115,28 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		// Level 1
 		if(gameState == 1) {
 			g.drawImage(level1, 0, 0, null);
-			if(grounded) {
-				g.drawImage(player, playerX, playerY, null);
+			if(jump) {
+				g.drawImage(playerRight, playerX, playerY, null);
+				g.drawRect(playerXHitBox, playerYHitBox, playerRight.getWidth(), playerRight.getHeight());
+				if(speed < 0) {
+					g.drawImage(playerLeft, playerX, playerY, null);
+				}
 			}
 			
 			g.drawLine(1, 400, 50, 400);
 			g.drawImage(jumpIndicator, 0, 0, null);
-			if(!  grounded) {
+			if(!jump) {
 				g.drawImage(player2, playerX, playerY, null);
+				g.drawRect(playerXHitBox, player2YHitBox, playerRight.getWidth(), playerRight.getHeight());
 			}
+			
+		}
+			
 			
 		}
 		
 		
-	}
+	
 	
 	// Run method updates every frame
 	public void run() {
@@ -142,26 +164,41 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		if(gameState == 0) {
 			if(e.getKeyChar() == ' ') {
 				gameState = 1;
-				paintComponent(this.getGraphics());
 			}
 		}
 		else if(gameState == 1) {
+			
 			if(e.getKeyChar() == ' ') {
-				if(grounded) {
+				if(jump) {
 					fallingSpeed = 0;
 					fallingSpeed -= 20;
-					grounded = false;
+					jump = false;
+					
+					
 				}
 			}
 			if(e.getKeyCode() == 49) {
 				height = 500;
 			}
 			if(e.getKeyCode() == 50) {
-				height -= 100;
+				height += 100;
 			}
 			if(e.getKeyCode() == 51) {
-				height -= 200;
+				height += 200;
 			}
+			if(e.getKeyCode() == 39) {
+				speed = 5;
+				playerX += speed;
+				playerXHitBox += speed;
+				direction = 1;
+			}
+			if(e.getKeyCode() == 37) {
+				speed = -5;
+				playerX += speed;
+				playerXHitBox -= speed;
+				direction = -1;
+			}
+			
 		}
 		
 	}
@@ -185,4 +222,3 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		return Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
 	}
 }
-// https://medium.com/@brazmogu/physics-for-game-dev-a-platformer-physics-cheatsheet-f34b09064558
