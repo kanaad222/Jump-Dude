@@ -37,6 +37,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static int player2YHitBox = playerY;
 	public static int floor1XHitBox = 0;
 	public static int floor1YHitBox = 668;
+	public static int towerXHitBox = 1132;
 	
 	// Levels (Place holders)
 	public static BufferedImage level1;
@@ -45,14 +46,8 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static BufferedImage level4;
 	public static BufferedImage level5;
 	
-	// Collision arrays
-	public static int[] wallArrX = {};
-	public static int[] wallArrY = {};
-	
 	// Gamestate
 	public static int gameState = 0;
-
-	
 	
 	public JumpDude() {
 		setPreferredSize(new Dimension(1280, 720));
@@ -88,7 +83,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	}
 	
 	public static void updatePlayer() {
-		if(jump == false) {
+		if(!jump) {
 			// Horizontal In-Air  Movement
 			playerX = playerX + 5 * direction;
 			playerXHitBox = playerXHitBox + 5 * direction;
@@ -121,13 +116,14 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		if(gameState == 1) {
 			// Draw the image of the level
 			g.drawImage(level1, 0, 0, null);
+			
+			g.drawRect(floor1XHitBox, floor1YHitBox, 1280, 52);
 			// Jumping animations
 			if(jump) {
 				g.drawImage(playerRight, playerX, playerY, null);
 				
 				// Draw hitboxes for everything in the level
 				g.drawRect(playerXHitBox, playerYHitBox, playerRight.getWidth(), playerRight.getHeight());
-				g.drawRect(floor1XHitBox, floor1YHitBox, 1280, 52);
 				
 				// If going left, draw the player facing left
 				if(speed < 0) {
@@ -197,31 +193,40 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
 			// If right arrow key is pressed
 			if(e.getKeyCode() == 39) {
+				speed = 5;
 				direction = 1;
-				playerX += speed * direction;
-				playerXHitBox += speed * direction;
+				playerX += speed;
+				playerXHitBox += speed;
 			}
 			// If left arrow key is pressed
 			if(e.getKeyCode() == 37) {
+				speed = -5;
 				direction = -1;
-				playerX += speed * direction;
-				playerXHitBox -= speed * direction;
+				playerX += speed;
+				playerXHitBox += speed;
 			}
 			
 		}
 		
 	}
-	/*/
+
 	public static boolean collision(int playerX, int playerY, int XHitBox, int YHitBox, int gameState) {
-		if(gameState == 1) {
-			if(playerY >= 668 && YHitBox >= 668 && playerX)
+		int[] collisionArrX = {};
+		int[] collisionArrY = {};
+		if(playerY > 545) {
+			return true;
 		}
+		return false;
 	}
-	/*/
+	
 	// Gets the angle of a line using 2 points
 	// To check for slope direction
 	public static double getAngle(int x1, int y1, int x2, int y2) {
 		return Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
+	}
+	
+	public static float slope(float x1, float x2, float y1, float y2) {
+		return (y2 - y1) / (x2 - x1);
 	}
 
 	@Override
