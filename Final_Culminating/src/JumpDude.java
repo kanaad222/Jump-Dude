@@ -43,8 +43,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static BufferedImage level1;
 	public static BufferedImage level2;
 	public static BufferedImage Level3;
-	public static BufferedImage level4;
-	public static BufferedImage level5;
+	
+	// Probably not making these
+	// public static BufferedImage level4;
+	// public static BufferedImage level5;
 	
 	// Gamestate
 	public static int gameState = 0;
@@ -60,6 +62,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			playerRight = ImageIO.read(new File("Character Sprite1.png"));
 			playerLeft = ImageIO.read(new File("Character Sprite3.png"));
 			player2 = ImageIO.read(new File("Character Sprite2.png"));
+			player4 = ImageIO.read(new File("Character Sprite4.png"));
 			jumpIndicator = ImageIO.read(new File("jumpIndicator2.png"));
 		}
 		catch(Exception e) {
@@ -85,6 +88,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static void updatePlayer() {
 		if(!jump) {
 			// Horizontal In-Air  Movement
+			// Cannot jump straight up (mechanic)
 			playerX = playerX + 5 * direction;
 			playerXHitBox = playerXHitBox + 5 * direction;
 			
@@ -134,8 +138,15 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			
 			g.drawImage(jumpIndicator, 0, 0, null);
 			if(!jump) {
-				g.drawImage(player2, playerX, playerY, null);
-				g.drawRect(playerXHitBox, player2YHitBox, playerRight.getWidth(), playerRight.getHeight());
+				if(direction == 1) {
+					g.drawImage(player2, playerX, playerY, null);
+					g.drawRect(playerXHitBox, player2YHitBox, playerRight.getWidth(), playerRight.getHeight());
+				}
+				if(direction == -1) {
+					g.drawImage(player4, playerX, playerY, null);
+				}
+				
+				
 			}
 			
 		}
