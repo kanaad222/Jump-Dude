@@ -1,11 +1,12 @@
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
-import java.awt.Rectangle;
+import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -21,11 +22,16 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static BufferedImage player4;
 	public static BufferedImage jumpIndicator;
 	
+	//public static Box playerRect;
+	
 	// Player Stats
 	public static int playerX = 100;
 	public static int playerY = 560;
 	public static int height = 560;
 	public static boolean jump = true;
+	public static int numberOfJumps = 0;
+	public static int[] leaderboardScores = new int[3];
+	public static String[] leaderboardNames = new String[3];
 	public static int fallingSpeed = 0;
 	public static int speed = 0;
 	// 1 for right and -1 for left
@@ -35,9 +41,6 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static int playerXHitBox = playerX;
 	public static int playerYHitBox = playerY;
 	public static int player2YHitBox = playerY;
-	public static int floor1XHitBox = 0;
-	public static int floor1YHitBox = 668;
-	public static int towerXHitBox = 1132;
 	
 	// Levels (Place holders)
 	public static BufferedImage level1;
@@ -50,10 +53,16 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	
 	// Gamestate
 	public static int gameState = 0;
+	// private Image image;
+	
 	
 	public JumpDude() {
 		setPreferredSize(new Dimension(1280, 720));
 		setBackground(new Color(255, 255, 255));
+		
+		//playerRect = new Box(playerX, playerY, playerRight.getHeight(), playerRight.getWidth());
+		// Image image;
+		//platform1 = new Box();
 		
 		try {
 			// Initialize Variables
@@ -96,7 +105,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			playerY += fallingSpeed;
 			player2YHitBox += fallingSpeed;
 			fallingSpeed += 1;
-			if(playerY >= height && player2YHitBox >= height && playerY != floor1YHitBox && player2YHitBox != floor1YHitBox && playerX != floor1XHitBox && playerXHitBox != floor1XHitBox) {
+			if(playerY >= height && player2YHitBox >= height || checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) { //&& playerY != floor1YHitBox && player2YHitBox != floor1YHitBox && playerX != floor1XHitBox && playerXHitBox != floor1XHitBox) {
 				playerY = height;
 				player2YHitBox = height;
 				jump = true;
@@ -119,15 +128,18 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		// Level 1
 		if(gameState == 1) {
 			// Draw the image of the level
-			g.drawImage(level1, 0, 0, null);
 			
-			g.drawRect(floor1XHitBox, floor1YHitBox, 1280, 52);
+			g.drawImage(level1, 0, 0, null);
+			g.fillRect(788, 492, 178, 52);
+			
+			// g.drawRect(floor1XHitBox, floor1YHitBox, 1280, 52);
 			// Jumping animations
 			if(jump) {
 				g.drawImage(playerRight, playerX, playerY, null);
 				
 				// Draw hitboxes for everything in the level
-				g.drawRect(playerXHitBox, playerYHitBox, playerRight.getWidth(), playerRight.getHeight());
+				//g.drawRect(playerXHitBox, playerYHitBox, playerRight.getWidth(), playerRight.getHeight());
+				
 				
 				// If going left, draw the player facing left
 				if(speed < 0) {
@@ -185,7 +197,9 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				if(jump) {
 					fallingSpeed = 0;
 					fallingSpeed -= 20;
-					jump = false;
+					if(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) {
+						jump = false;
+					}
 					
 					
 				}
@@ -204,10 +218,12 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
 			// If right arrow key is pressed
 			if(e.getKeyCode() == 39) {
-				speed = 5;
-				direction = 1;
-				playerX += speed;
-				playerXHitBox += speed;
+				if(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) {
+					speed = 5;
+					direction = 1;
+					playerX += speed;
+					playerXHitBox += speed;
+				}
 			}
 			// If left arrow key is pressed
 			if(e.getKeyCode() == 37) {
@@ -220,15 +236,26 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		
 	}
-
-	public static boolean collision(int playerX, int playerY, int XHitBox, int YHitBox, int gameState) {
-		int[] collisionArrX = {};
-		int[] collisionArrY = {};
-		if(playerY > 545) {
-			return true;
+	
+	public static boolean checkCollision(int playerX, int playerY, int playerHeight, int playerWidth) {
+		if(gameState == 1) {
+			
+			int playerTopLeft = playerX;
+			int playerTopRight = playerX + playerWidth;
+			int playerBottomLeft = playerX + playerHeight;
+			int playerBottomRight = playerX + playerHeight + playerWidth;
+			
+			int[] platform1 = {788, 543, 52, 178};
+			
+			if((playerTopLeft > platform1[0] - platform1[2] && playerTopRight > platform1[0] - platform1[2])) {
+				return true;
+			}
 		}
 		return false;
 	}
+
+	// Unfinished Methods
+	
 	
 	// Gets the angle of a line using 2 points
 	// To check for slope direction
@@ -236,9 +263,14 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		return Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
 	}
 	
+	// Returns the slope
 	public static float slope(float x1, float x2, float y1, float y2) {
 		return (y2 - y1) / (x2 - x1);
 	}
+	
+	
+	
+	// Unused methods
 
 	@Override
 	public void keyReleased(KeyEvent e) {
