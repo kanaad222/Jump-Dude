@@ -28,6 +28,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static int playerY = 550;
 	public static int height = 560;
 	public static boolean jump = true;
+	public static int jumpLength = 5;
 	public static int numberOfJumps = 0;
 	public static int[] leaderboardScores = new int[3];
 	public static String[] leaderboardNames = new String[3];
@@ -98,8 +99,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		if(!jump) {
 			// Horizontal In-Air  Movement
 			// Cannot jump straight up (mechanic)
-			playerX = playerX + 5 * direction;
-			playerXHitBox = playerXHitBox + 5 * direction;
+			playerX = playerX + jumpLength * direction;
 			
 			// Vertical In-Air Movement
 			playerY += fallingSpeed;
@@ -107,6 +107,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			fallingSpeed += 1;
 			if(checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) { //&& playerY != floor1YHitBox && player2YHitBox != floor1YHitBox && playerX != floor1XHitBox && playerXHitBox != floor1XHitBox) {
 				//playerY = height;
+//				if(!(playerY > 560)) {
+//					direction *= -1;	
+//				}
+				
 				player2YHitBox = height;
 				jump = true;
 				fallingSpeed = 0;
@@ -193,7 +197,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		else if(gameState == 1) {
 			
-			if(e.getKeyChar() == ' ' || checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) {
+			if(e.getKeyChar() == ' ') {
 				if(jump) {
 					fallingSpeed = 0;
 					//if(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) {
@@ -212,15 +216,15 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
 			// If 1 is pressed
 			if(e.getKeyCode() == 49) {
-				height = 500;
+				jumpLength = 7;
 			}
 			// If 2 is pressed
 			if(e.getKeyCode() == 50) {
-				height += 100;
+				jumpLength = 8;
 			}
 			// If 3 is pressed
 			if(e.getKeyCode() == 51) {
-				height += 200;
+				jumpLength = 9;
 			}
 			// If right arrow key is pressed
 			if(e.getKeyCode() == 39) {
@@ -257,13 +261,33 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			
 			// Platform dimensions
 			int[] platform1 = {788, 543, 178, 52};
+			int[] platform2 = {430, 450, 178, 52};
+			int[] platform3 = {48, 280, 178, 52};
 			
-			if((playerY > 560) || (playerTopLeftY > platform1[1] + platform1[3] && playerTopRightY > platform1[1] + platform1[3]) 
-				&& (playerTopLeftY < platform1[1] + platform1[3] && playerTopRightY < platform1[1] + platform1[3])
-				&& (playerTopLeftY < platform1[1] && playerTopRightY < platform1[1])
-				|| (playerTopRightX > platform1[0] && playerBottomRightX > platform1[0] && playerTopLeftX < platform1[0] + platform1[2])) {
+			if(((playerY > 560) || (playerTopLeftY > platform1[1] + platform1[3] && playerTopRightY > platform1[1] + platform1[3]) 
+				|| (playerTopLeftY < platform1[1] + platform1[3] && playerTopRightY < platform1[1] + platform1[3])
+				&& !(playerBottomLeftY < platform1[1] && playerBottomRightY < platform1[1])
+				&& (playerTopRightX > platform1[0] && playerBottomRightX > platform1[0] && playerBottomLeftX > platform1[0] && playerTopLeftX < platform1[0] + platform1[2])) ) {
 				return true;
 			}
+			if(((playerY > 560) || (playerTopLeftY > platform2[1] + platform2[3] && playerTopRightY > platform2[1] + platform2[3]) 
+					&& (playerTopLeftY < platform2[1] + platform2[3] && playerTopRightY < platform2[1] + platform2[3])
+					|| !(playerBottomLeftY < platform2[1] && playerBottomRightY < platform2[1])
+					&& (playerTopRightX > platform2[0] && playerBottomRightX > platform2[0] && playerBottomLeftX > platform2[0] && playerTopLeftX < platform2[0] + platform2[2]))){
+						return true;
+					}
+			if(((playerY > 560) || (playerTopLeftY > platform3[1] + platform3[3] && playerTopRightY > platform3[1] + platform3[3]) 
+					&& (playerTopLeftY < platform3[1] + platform3[3] && playerTopRightY < platform3[1] + platform3[3])
+					|| !(playerBottomLeftY < platform3[1] && playerBottomRightY < platform3[1])
+					&& (playerTopRightX > platform3[0] && playerBottomRightX > platform3[0] && playerBottomLeftX > platform3[0] && playerTopLeftX < platform3[0] + platform3[2]))){
+						return true;
+					}
+//			else if((playerY > 560) || (playerTopLeftY > platform2[1] + platform2[3] && playerTopRightY > platform2[1] + platform2[3]) 
+//					|| (playerTopLeftY < platform2[1] + platform2[3] && playerTopRightY < platform2[1] + platform2[3])
+//					&& !(playerBottomLeftY < platform2[1] && playerBottomRightY < platform2[1])
+//					&& (playerTopRightX > platform2[0] && playerBottomRightX > platform2[0] && playerTopLeftX < platform2[0] + platform2[2])) {
+//					return true;
+//				}
 		}
 		return false;
 	}
