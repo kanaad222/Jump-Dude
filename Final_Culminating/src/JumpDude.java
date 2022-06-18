@@ -9,6 +9,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
@@ -46,13 +47,15 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static int[] leaderboardScores = new int[3];
 	public static int fallingSpeed = 0;
 	public static int speed = 0;
+	public static boolean collision = false;
 	// 1 for right and -1 for left
 	public static int direction = 1;
 	
 	// Hitboxes
-	public static int playerXHitBox = playerX;
-	public static int playerYHitBox = playerY;
-	public static int player2YHitBox = playerY;
+	public static rect player = new rect(playerX, playerY, 45, 110);
+	public static rect floor = new rect(0, 668, 1280, 52);
+	public static rect rect1 = new rect(788, 491, 178, 52);
+	public static rect rect2 = new rect(430, 398, 178, 52);
 	
 	// Levels (Place holders)
 	public static BufferedImage level1;
@@ -70,16 +73,12 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	// 3 is level 3
 	// 4 is the about page
 	public static int gameState = 0;
-	// private Image image;
 	
 	
 	public JumpDude() {
 		setPreferredSize(new Dimension(1280, 720));
 		setBackground(new Color(255, 255, 255));
 		
-		//playerRect = new Box(playerX, playerY, playerRight.getHeight(), playerRight.getWidth());
-		// Image image;
-		//platform1 = new Box();
 		
 		try {
 			// Initialize Variables
@@ -114,23 +113,19 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	}
 	
 	public static void updatePlayer() {
+		player = new rect(playerX, playerY, 45, 110);
+		collision();
 		// If not jumping or not colliding with anything (easy implementation of gravity)
-		if(!jump || (!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth()) && playerY < 560)) {
+		if(!jump || !collision && playerY < 557) { //(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth()) && playerY < 560)
 			// Horizontal In-Air  Movement
 			// Cannot jump straight up (mechanic)
 			playerX = playerX + jumpLength * direction;
 			
 			// Vertical In-Air Movement
 			playerY += fallingSpeed;
-			player2YHitBox += fallingSpeed;
+			
 			fallingSpeed += 1;
-			if(checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) { //&& playerY != floor1YHitBox && player2YHitBox != floor1YHitBox && playerX != floor1XHitBox && playerXHitBox != floor1XHitBox) {
-				//playerY = height;
-//				if(!(playerY > 560)) {
-//					direction *= -1;	
-//				}
-				
-				player2YHitBox = height;
+			if(collision && playerY < 557) {
 				jump = true;
 				fallingSpeed = 0;
 			}
@@ -153,15 +148,19 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			// Draw the image of the level
 			
 			g.drawImage(level1, 0, 0, null);
-			//g.fillRect(788, 492, 178, 52);
 			g.setColor(new Color(255, 255, 255));
 			g.setFont(new Font("Courier", Font.BOLD, 30));
 			g.drawString("Number of Jumps: " + numberOfJumps, 850, 64);
 			
-			// g.drawRect(floor1XHitBox, floor1YHitBox, 1280, 52);
+			g.drawRect(playerX, playerY, 45, 110);
+			g.drawRect(788, 491, 178, 52);
+			g.drawRect(430, 398, 178, 52);
+			g.drawRect(0, 668, 1280, 52);
+			
 			// Jumping animations
 			if(jump) {
 				g.drawImage(playerRight, playerX, playerY, null);
+				
 				
 				// Draw hitboxes for everything in the level
 				//g.drawRect(playerXHitBox, playerYHitBox, playerRight.getWidth(), playerRight.getHeight());
@@ -225,16 +224,13 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		else if(gameState == 1) {
 			
+			System.out.println("X: " + playerX + "| Y: " + playerY);
 			if(e.getKeyChar() == ' ') {
 				if(jump) {
 					fallingSpeed = 0;
-					//if(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth())) {
 					jump = false;
 					fallingSpeed -= 20;
 					numberOfJumps++;
-//					while(checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth()) && jump) {
-//						fallingSpeed -= 20;
-//					}
 					
 				}
 			}
@@ -255,14 +251,14 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				speed = 5;
 				direction = 1;
 				playerX += speed;
-				playerXHitBox += speed;
+				//playerXHitBox += speed;
 			}
 			// If left arrow key is pressed
 			if(e.getKeyCode() == 37) {
 				speed = -5;
 				direction = -1;
 				playerX += speed;
-				playerXHitBox += speed;
+				//playerXHitBox += speed;
 			}
 			
 		}
@@ -270,72 +266,102 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	}
 	
 	// Checks for collision
-	public static boolean checkCollision(int playerX, int playerY, int playerHeight, int playerWidth) {
-		// Get the attributes
-		int playerTopLeftY = playerY;
-		int playerTopRightY = playerY + playerWidth;
-		int playerBottomLeftY = playerY + playerHeight;
-		int playerBottomRightY = playerY + playerHeight + playerWidth;
-		
-		int playerTopLeftX = playerX;
-		int playerTopRightX = playerX + playerWidth;
-		int playerBottomLeftX = playerX + playerHeight;
-		int playerBottomRightX = playerX + playerHeight + playerWidth;
+//	public static boolean checkCollision(int playerX, int playerY, int playerHeight, int playerWidth) {
+//		// Get the attributes
+//		int playerTopLeftY = playerY;
+//		int playerTopRightY = playerY + playerWidth;
+//		int playerBottomLeftY = playerY + playerHeight;
+//		int playerBottomRightY = playerY + playerHeight + playerWidth;
+//		
+//		int playerTopLeftX = playerX;
+//		int playerTopRightX = playerX + playerWidth;
+//		int playerBottomLeftX = playerX + playerHeight;
+//		int playerBottomRightX = playerX + playerHeight + playerWidth;
+//		
+//		if(gameState == 1) {
+//			
+//			// Platform dimensions
+//			//                 x, y, width, height
+//			int[] platform1 = {788, 543, 178, 52};
+//			int[] platform2 = {430, 450, 178, 52};
+//			int[] platform3 = {100, 150, 178, 52};
+//			int[] platform4 = {429, 175, 178, 52};
+//			int[] platform5 = {790, 175, 178, 52}; 
+//			
+//			if((playerTopLeftY > platform3[1] + platform3[3] && playerTopRightY > platform3[1] + platform3[3])
+//			    && (playerBottomLeftY > platform3[1] + platform3[3] && playerBottomRightY > platform3[1] + platform3[3])
+//			    && playerTopLeftX > platform3[0] && playerTopRightX > platform3[0] && playerTopLeftX < platform3[0] + platform3[2] && playerTopRightX < platform3[0] + platform3[2]){
+//				return false;
+//			}
+//			
+//			if(playerY > 560) {
+//				return true;
+//			}
+//			
+//			else if(((playerTopLeftY > platform1[1] + platform1[3] && playerTopRightY > platform1[1] + platform1[3]) 
+//				&& (playerTopLeftY > platform1[1] + platform1[3] && playerTopRightY > platform1[1] + platform1[3] && playerTopLeftY > platform1[1] + platform1[3] + platform1[2] && playerTopRightY > platform1[1] + platform1[3] + platform1[2])
+//				|| !(playerBottomLeftY < platform1[1] && playerBottomRightY < platform1[1])
+//				&& (playerTopRightX > platform1[0] && playerBottomRightX > platform1[0] && playerBottomLeftX > platform1[0] && playerTopLeftX < platform1[0] + platform1[2])) ) {
+//						return true;
+//					}
+//			else if(((playerTopLeftY > platform2[1] + platform2[3] && playerTopRightY > platform2[1] + platform2[3]) 
+//					&& (playerTopLeftY < platform2[1] + platform2[3] && playerTopRightY < platform2[1] + platform2[3] && playerTopLeftY > platform2[1] + platform2[3] + platform2[2] && playerTopRightY > platform2[1] + platform2[3] + platform2[2])
+//					|| !(playerBottomLeftY < platform2[1] && playerBottomRightY < platform2[1])
+//					&& (playerTopRightX > platform2[0] && playerBottomRightX > platform2[0] && playerBottomLeftX > platform2[0] && playerTopLeftX < platform2[0] + platform2[2]))){
+//						return true;
+//					}
+//			else if(( (playerTopLeftY > platform3[1] + platform3[3] && playerTopRightY > platform3[1] + platform3[3]) 
+//					&& (playerTopLeftY < platform3[1] + platform3[3] && playerTopRightY < platform3[1] + platform3[3])
+//					|| !(playerBottomLeftY < platform3[1] && playerBottomRightY < platform3[1])
+//					&& (playerTopRightX > platform3[0] && playerBottomRightX > platform3[0] && playerBottomLeftX > platform3[0] && playerTopLeftX < platform3[0] + platform3[2]))){
+//						return true;
+//					}
+//			else if(((playerTopLeftY > platform4[1] + platform4[3] && playerTopRightY > platform4[1] + platform4[3]) 
+//					&& (playerTopLeftY < platform4[1] + platform4[3] && playerTopRightY < platform4[1] + platform4[3])
+//					|| !(playerBottomLeftY < platform4[1] && playerBottomRightY < platform4[1])
+//					&& (playerTopRightX > platform4[0] && playerBottomRightX > platform4[0] && playerBottomLeftX > platform4[0] && playerTopLeftX < platform4[0] + platform4[2]))){
+//						return true;
+//					}
+//			else if(((playerTopLeftY > platform5[1] + platform5[3] && playerTopRightY > platform5[1] + platform5[3]) 
+//					&& (playerTopLeftY < platform5[1] + platform5[3] && playerTopRightY < platform5[1] + platform5[3])
+//					|| !(playerBottomLeftY < platform5[1] && playerBottomRightY < platform5[1])
+//					&& (playerTopRightX > platform5[0] && playerBottomRightX > platform5[0] && playerBottomLeftX > platform5[0] && playerTopLeftX < platform5[0] + platform5[2]))){
+//						return true;
+//					}
+//			
+//
+//			
+////			else if((playerY > 560) || (playerTopLeftY > platform2[1] + platform2[3] && playerTopRightY > platform2[1] + platform2[3]) 
+////					|| (playerTopLeftY < platform2[1] + platform2[3] && playerTopRightY < platform2[1] + platform2[3])
+////					&& !(playerBottomLeftY < platform2[1] && playerBottomRightY < platform2[1])
+////					&& (playerTopRightX > platform2[0] && playerBottomRightX > platform2[0] && playerTopLeftX < platform2[0] + platform2[2])) {
+////					return true;
+////				}
+//		}
+//		return false;
+//	}
+	public static void collision() {
+		Rectangle player1 = player.bounds();
 		
 		if(gameState == 1) {
-			
-			// Platform dimensions
-			//                 x, y, width, height
-			int[] platform1 = {788, 543, 178, 52};
-			int[] platform2 = {430, 450, 178, 52};
-			int[] platform3 = {48, 310, 178, 52};
-			int[] platform4 = {429, 175, 178, 52};
-			int[] platform5 = {790, 175, 178, 52};
+			Rectangle platform1 = floor.bounds();
+			Rectangle platform2 = rect1.bounds();
+			Rectangle platform3 = rect2.bounds();
 			
 			
-			if(((playerY > 560) || (playerTopLeftY > platform1[1] + platform1[3] && playerTopRightY > platform1[1] + platform1[3]) 
-				&& (playerTopLeftY > platform1[1] + platform1[3] && playerTopRightY > platform1[1] + platform1[3] && playerTopLeftY > platform1[1] + platform1[3] + platform1[2] && playerTopRightY > platform1[1] + platform1[3] + platform1[2])
-				&& (playerBottomLeftY > platform1[1] + platform1[3] && playerBottomRightY > platform1[1] + platform1[3] && playerBottomLeftY > platform1[1] + platform1[3] + platform1[2] && playerBottomRightY > platform1[1] + platform1[3] + platform1[2])
-				|| !(playerBottomLeftY < platform1[1] && playerBottomRightY < platform1[1])
-				&& (playerTopRightX > platform1[0] && playerBottomRightX > platform1[0] && playerBottomLeftX > platform1[0] && playerTopLeftX < platform1[0] + platform1[2])) ) {
-						return true;
-					}
-			if(((playerTopLeftY > platform2[1] + platform2[3] && playerTopRightY > platform2[1] + platform2[3]) 
-					&& (playerTopLeftY < platform2[1] + platform2[3] && playerTopRightY < platform2[1] + platform2[3] && playerTopLeftY > platform2[1] + platform2[3] + platform2[2] && playerTopRightY > platform2[1] + platform2[3] + platform2[2])
-					&& (playerBottomLeftY > platform2[1] + platform2[3] && playerBottomRightY > platform2[1] + platform2[3] && playerBottomLeftY > platform2[1] + platform2[3] + platform2[2] && playerBottomRightY > platform2[1] + platform2[3] + platform2[2])
-					|| !(playerBottomLeftY < platform2[1] && playerBottomRightY < platform2[1])
-					&& (playerTopRightX > platform2[0] && playerBottomRightX > platform2[0] && playerBottomLeftX > platform2[0] && playerTopLeftX < platform2[0] + platform2[2]))){
-						return true;
-					}
-			if(( (playerTopLeftY > platform3[1] + platform3[3] && playerTopRightY > platform3[1] + platform3[3]) 
-					&& (playerTopLeftY < platform3[1] + platform3[3] && playerTopRightY < platform3[1] + platform3[3])
-					|| !(playerBottomLeftY < platform3[1] && playerBottomRightY < platform3[1])
-					&& (playerTopRightX > platform3[0] && playerBottomRightX > platform3[0] && playerBottomLeftX > platform3[0] && playerTopLeftX < platform3[0] + platform3[2]))){
-						return true;
-					}
-			if(((playerTopLeftY > platform4[1] + platform4[3] && playerTopRightY > platform4[1] + platform4[3]) 
-					&& (playerTopLeftY < platform4[1] + platform4[3] && playerTopRightY < platform4[1] + platform4[3])
-					|| !(playerBottomLeftY < platform4[1] && playerBottomRightY < platform4[1])
-					&& (playerTopRightX > platform4[0] && playerBottomRightX > platform4[0] && playerBottomLeftX > platform4[0] && playerTopLeftX < platform4[0] + platform4[2]))){
-						return true;
-					}
-			else if(((playerTopLeftY > platform5[1] + platform5[3] && playerTopRightY > platform5[1] + platform5[3]) 
-					&& (playerTopLeftY < platform5[1] + platform5[3] && playerTopRightY < platform5[1] + platform5[3])
-					|| !(playerBottomLeftY < platform5[1] && playerBottomRightY < platform5[1])
-					&& (playerTopRightX > platform5[0] && playerBottomRightX > platform5[0] && playerBottomLeftX > platform5[0] && playerTopLeftX < platform5[0] + platform5[2]))){
-						return true;
-					}
 			
-
-			
-//			else if((playerY > 560) || (playerTopLeftY > platform2[1] + platform2[3] && playerTopRightY > platform2[1] + platform2[3]) 
-//					|| (playerTopLeftY < platform2[1] + platform2[3] && playerTopRightY < platform2[1] + platform2[3])
-//					&& !(playerBottomLeftY < platform2[1] && playerBottomRightY < platform2[1])
-//					&& (playerTopRightX > platform2[0] && playerBottomRightX > platform2[0] && playerTopLeftX < platform2[0] + platform2[2])) {
-//					return true;
-//				}
+			if(player1.intersects(platform2) && playerY > 557) {
+				collision = true;
+				System.out.println("Collision");
+			}
+			else if(player1.intersects(platform1) && playerY > 557) {
+				collision = true;
+			}
+			else {
+				collision = false;
+			}
 		}
-		return false;
+		
 	}
 
 	// Unfinished Methods
