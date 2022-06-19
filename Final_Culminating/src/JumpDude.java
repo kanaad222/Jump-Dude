@@ -27,8 +27,8 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static BufferedImage player3;
 	public static BufferedImage player4;
 	public static BufferedImage jumpIndicator;
- 
-	//public static Box playerRect;
+	
+	
 	public static PrintWriter outputFile;
  
  
@@ -100,6 +100,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	// 2 is level 2
 	// 3 is level 3
 	// 4 is the about page
+	// 5 is the you win screen
 	public static int gameState = 0;
  
  
@@ -109,7 +110,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
  
  
 		try {
-			// Initialize Variables
+			// Import Variables
 			menu = ImageIO.read(new File("menu.png"));
 			rules = ImageIO.read(new File("rules.png"));
 			youWin = ImageIO.read(new File("youWin.png"));
@@ -144,19 +145,20 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		
 		// Text file
 		outputFile = new PrintWriter(new FileWriter("highscores.txt"));
+		
+		
 	}
  
 	public static void updatePlayer() {
+		// Physics
 		if(gameState == 1) {
 			player = new rect(playerX, playerY, 45, 110);
 			collision();
 			// If not jumping or not colliding with anything (easy implementation of gravity)
 	 
-			if(!jump && !collision) { //(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth()) && playerY < 560)
+			if(!jump && !collision) { 
 				// Horizontal In-Air  Movement
 				// Cannot jump straight up (mechanic)
-				//System.out.println("flag");
-				//System.out.println(playerY);
 				playerX = playerX + jumpLength * direction;
 	 
 				// Vertical In-Air Movement
@@ -165,6 +167,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				fallingSpeed += 1;
 	 
 			}
+			// If not collision
 			else if(!collision){
 				playerY += fallingSpeed;
 	 
