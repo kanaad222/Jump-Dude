@@ -7,11 +7,19 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
- 
+import java.util.Scanner;
+
 import javax.imageio.ImageIO;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
  
@@ -27,8 +35,16 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static BufferedImage player3;
 	public static BufferedImage player4;
 	public static BufferedImage jumpIndicator;
+	public static BufferedImage jumpIndicator2;
+	public static BufferedImage jumpIndicator3;
+	public static BufferedImage trophy;
 	
+	public static File jumpSound;
+	public static AudioInputStream audioStream;
+	public static Clip clip;
+	public static FloatControl gainControl;
 	
+	public static Scanner readFile;
 	public static PrintWriter outputFile;
  
  
@@ -43,9 +59,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static boolean infiniteLives = false;
 	public static int height = 560;
 	public static boolean jump = true;
-	public static int jumpLength = 5;
+	public static int jumpLength = 7;
 	public static int numberOfJumps = 0;
-	public static int[] leaderboardScores = new int[3];
+	public static int[] leaderboardScores = new int[0];
+	public static int[] top3 = new int[3];
 	public static int fallingSpeed = 0;
 	public static int speed = 0;
 	public static boolean collision = false;
@@ -122,6 +139,9 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			player2 = ImageIO.read(new File("Character Sprite2.png"));
 			player4 = ImageIO.read(new File("Character Sprite4.png"));
 			jumpIndicator = ImageIO.read(new File("jumpIndicator2.png"));
+			jumpIndicator2 = ImageIO.read(new File("JumpBar_2.png"));
+			jumpIndicator3 = ImageIO.read(new File("JumpBar_3.png"));
+			trophy = ImageIO.read(new File("trophy.png"));
 		}
 		catch(Exception e) {
 			System.out.println("IMAGE NOT FOUND");
@@ -135,7 +155,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		this.setFocusable(true);
 	}
  
-	public static void main(String[] args) throws IOException{
+	public static void main(String[] args) throws IOException, UnsupportedAudioFileException, LineUnavailableException{
 		JFrame gameWindow = new JFrame("Jump Dude");
 		JumpDude gamePanel = new JumpDude();
 		gameWindow.add(gamePanel);
@@ -143,14 +163,56 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		gameWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		gameWindow.setVisible(true);
 		
+		// Sound
+		jumpSound = new File("jumpSound.wav");
+		audioStream = AudioSystem.getAudioInputStream(jumpSound);
+		clip = AudioSystem.getClip();
+		clip.open(audioStream);
+		
 		// Text file
-		outputFile = new PrintWriter(new FileWriter("highscores.txt"));
+		outputFile = new PrintWriter(new FileWriter("highscores.txt", true));
 		
 		
 	}
+	
+	// gets the top 3 lowest values from the file
+	public static void getTop3() throws FileNotFoundException {
+		readFile = new Scanner(new File("highscores.txt"));
+		int first = 1000000000;
+		int second = 1000000000;
+		int third = 1000000000;
+		
+		while(readFile.hasNextLine()) {
+			int curLine = Integer.parseInt(readFile.nextLine());
+			if(curLine < first && curLine < second && curLine < third) {
+				top3[0] = curLine;
+				first = curLine;
+			}
+			if(curLine < second && curLine < third && curLine > first) {
+				top3[1] = curLine;
+				second = curLine;
+			}
+			if(curLine < third && curLine > second && curLine > first) {
+				top3[2] = curLine;
+				third = curLine;
+			}
+		}
+
+	}
+	
+	// outputs the highscores on the screen
+	public static void outputHighscores(Graphics g) throws FileNotFoundException {
+		getTop3();
+		// Converts to string
+		g.drawString(String.valueOf(top3[0]), 610, 160);
+		g.drawString(String.valueOf(top3[1]), 610, 200);
+		g.drawString(String.valueOf(top3[2]), 610, 240);
+		readFile.close();
+	}
  
+	// Physics
 	public static void updatePlayer() {
-		// Physics
+		
 		if(gameState == 1) {
 			player = new rect(playerX, playerY, 45, 110);
 			collision();
@@ -185,11 +247,9 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			jump = false;
 			// If not jumping or not colliding with anything (easy implementation of gravity)
 	 
-			if(!jump && !collision) { //(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth()) && playerY < 560)
+			if(!jump && !collision) { 
 				// Horizontal In-Air  Movement
 				// Cannot jump straight up (mechanic)
-				//System.out.println("flag");
-				//System.out.println(playerY);
 				playerX2 = playerX2 + jumpLength * direction;
 	 
 				// Vertical In-Air Movement
@@ -215,11 +275,9 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			jump = false;
 			// If not jumping or not colliding with anything (easy implementation of gravity)
 	 
-			if(!jump && !collision) { //(!checkCollision(playerX, playerY, playerRight.getHeight(), playerRight.getWidth()) && playerY < 560)
+			if(!jump && !collision) { 
 				// Horizontal In-Air  Movement
 				// Cannot jump straight up (mechanic)
-				//System.out.println("flag");
-				//System.out.println(playerY);
 				playerX3 = playerX3 + jumpLength * direction;
 	 
 				// Vertical In-Air Movement
@@ -280,8 +338,16 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				}
 			}
  
- 
-			g.drawImage(jumpIndicator, 0, 0, null);
+			if(jumpLength == 7) {
+				g.drawImage(jumpIndicator, 24, 24, null);
+			}
+			if(jumpLength == 8) {
+				g.drawImage(jumpIndicator2, 24, 24, null);
+			}
+			if(jumpLength == 9) {
+				g.drawImage(jumpIndicator3, 24, 24, null);
+			}
+			
 			if(!jump) {
 				if(direction == 1) {
 					g.drawImage(player2, playerX, playerY, null);
@@ -299,7 +365,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
  
 		}
 		if(gameState == 2) {
-			jump = true;
+			//jump = true;
 			collision = false;
 			
 			g.drawImage(level2, 0, 0, null);
@@ -333,7 +399,15 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
  
  
-			g.drawImage(jumpIndicator, 0, 0, null);
+			if(jumpLength == 7) {
+				g.drawImage(jumpIndicator, 24, 24, null);
+			}
+			if(jumpLength == 8) {
+				g.drawImage(jumpIndicator2, 24, 24, null);
+			}
+			if(jumpLength == 9) {
+				g.drawImage(jumpIndicator3, 24, 24, null);
+			}
 			if(!jump) {
 				if(direction == 1) {
 					g.drawImage(player2, playerX2, playerY2, null);
@@ -387,7 +461,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		
 		if(gameState == 3) {
-			jump = true;
+			//jump = true;
 			collision = false;
 			
 			// Draw the image of the level
@@ -415,7 +489,15 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
  
  
-			g.drawImage(jumpIndicator, 0, 0, null);
+			if(jumpLength == 7) {
+				g.drawImage(jumpIndicator, 24, 24, null);
+			}
+			if(jumpLength == 8) {
+				g.drawImage(jumpIndicator2, 24, 24, null);
+			}
+			if(jumpLength == 9) {
+				g.drawImage(jumpIndicator3, 24, 24, null);
+			}
 			if(!jump) {
 				if(direction == 1) {
 					g.drawImage(player2, playerX3, playerY3, null);
@@ -445,6 +527,26 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		if(gameState == 5) {
 			g.drawImage(youWin, 0, 0, null);
+			outputFile.println(numberOfJumps);
+			System.out.println(numberOfJumps);
+			outputFile.close();
+		}
+		if(gameState == 6) {
+			g.setColor(new Color(0,0,0));
+			
+			g.fillRect(0, 0, 1280, 720);
+			g.setColor(new Color(255,255,255));
+			g.setFont(new Font("Courier", Font.BOLD, 50));
+			g.drawString("HIGHSCORES", 490, 50);
+			g.setFont(new Font("Courier", Font.BOLD, 30));
+			g.drawImage(trophy, 0, 0, null);
+			g.drawString("Press 'k'", 575, 700);
+			try {
+				outputHighscores(g);
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
+			
 		}
  
 	}
@@ -457,6 +559,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		while(true) {
 			repaint();
 			updatePlayer();
+			if(gameState == 5) {
+				outputFile.println(numberOfJumps);
+			}
+			
 
 			try {
 				Thread.sleep(1000/60);
@@ -481,6 +587,9 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			if(e.getKeyChar() == 'x') {
 				gameState = 4;
 			}
+			if(e.getKeyChar() == 'a') {
+				gameState = 6;
+			}
 		}
 		else if(gameState == 4) {
 			if(e.getKeyChar() == 'f') {
@@ -492,9 +601,54 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				gameState = 0;
 			}
 		}
+		else if(gameState == 6) {
+			if(e.getKeyChar() == 'k') {
+				gameState = 0;
+			}
+		}
 		else if(gameState == 1) {
  
 			System.out.println("X: " + playerX + "| Y: " + playerY);
+			if(e.getKeyChar() == ' ') {
+				System.out.println(jump);
+				if(jump) {
+					clip.setFramePosition(0);
+					clip.start();
+					fallingSpeed = 0;
+					jump = false;
+					fallingSpeed -= 20;
+					numberOfJumps++;
+ 
+				}
+			}
+			// If 1 is pressed
+			if(e.getKeyCode() == 49) {
+				jumpLength = 7;
+			}
+			// If 2 is pressed
+			if(e.getKeyCode() == 50) {
+				jumpLength = 8;
+			}
+			// If 3 is pressed
+			if(e.getKeyCode() == 51) {
+				jumpLength = 9;
+			}
+			// If right arrow key is pressed
+			if(e.getKeyCode() == 39) {
+				speed = 5;
+				direction = 1;
+				playerX += speed;
+			}
+			// If left arrow key is pressed
+			if(e.getKeyCode() == 37) {
+				speed = -5;
+				direction = -1;
+				playerX += speed;
+			}
+ 
+		}
+		if(gameState == 2) {
+			System.out.println("X: " + playerX2 + "| Y: " + playerY2);
 			if(e.getKeyChar() == ' ') {
 				System.out.println(jump);
 				if(jump) {
@@ -521,55 +675,15 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			if(e.getKeyCode() == 39) {
 				speed = 5;
 				direction = 1;
-				playerX += speed;
-				//playerXHitBox += speed;
-			}
-			// If left arrow key is pressed
-			if(e.getKeyCode() == 37) {
-				speed = -5;
-				direction = -1;
-				playerX += speed;
-				//playerXHitBox += speed;
-			}
- 
-		}
-		if(gameState == 2) {
-			System.out.println("X: " + playerX2 + "| Y: " + playerY2);
-			if(e.getKeyChar() == ' ') {
-				System.out.println(jump);
-				if(jump) {
-					fallingSpeed = 0;
-					//jump = false;
-					fallingSpeed -= 20;
-					numberOfJumps++;
- 
-				}
-			}
-			// If 1 is pressed
-			if(e.getKeyCode() == 49) {
-				jumpLength = 7;
-			}
-			// If 2 is pressed
-			if(e.getKeyCode() == 50) {
-				jumpLength = 8;
-			}
-			// If 3 is pressed
-			if(e.getKeyCode() == 51) {
-				jumpLength = 9;
-			}
-			// If right arrow key is pressed
-			if(e.getKeyCode() == 39) {
-				speed = 5;
-				direction = 1;
 				playerX2 += speed;
-				//playerXHitBox += speed;
+
 			}
 			// If left arrow key is pressed
 			if(e.getKeyCode() == 37) {
 				speed = -5;
 				direction = -1;
 				playerX2 += speed;
-				//playerXHitBox += speed;
+
 			}
 		}
 		if(gameState == 3) {
@@ -578,7 +692,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				System.out.println(jump);
 				if(jump) {
 					fallingSpeed = 0;
-					//jump = false;
+					jump = false;
 					fallingSpeed -= 20;
 					numberOfJumps++;
  
@@ -601,14 +715,14 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 				speed = 7;
 				direction = 1;
 				playerX3 += speed;
-				//playerXHitBox += speed;
+
 			}
 			// If left arrow key is pressed
 			if(e.getKeyCode() == 37) {
 				speed = -7;
 				direction = -1;
 				playerX3 += speed;
-				//playerXHitBox += speed;
+
 			}
 		}
  
@@ -636,7 +750,6 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			else if(check(platform3,player1) ) {
  
 			}
-			
 			else if(check(platform4, player1)) {
 				
 			}
@@ -860,7 +973,17 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		return false;
 		
 	}
-
+	
+	
+	public static int[] extendIntArr(int[] arr, int n) {
+		int[] arr2 = new int[arr.length + 1];
+		
+		for(int i = 0; i < arr.length; i++) {
+			arr2[i] = arr[i];
+		}
+		arr2[arr2.length-1] = n;
+		return arr2;
+	}
  
 	// Unused methods
  
