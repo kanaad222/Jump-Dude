@@ -1,4 +1,5 @@
 import java.awt.Color;
+
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -7,24 +8,38 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.Scanner;
-
 import javax.imageio.ImageIO;
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import javax.sound.sampled.FloatControl;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.UnsupportedAudioFileException;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+
+import javax.sound.sampled.*;
  
 public class JumpDude extends JPanel implements Runnable, KeyListener{ 
  
+	// Sounds & Music
+	public static File jumpSound;
+	public static AudioInputStream audioStream;
+	public static Clip clip;
+	
+	public static File menuMusic;
+	public static AudioInputStream audioStream2;
+	public static Clip clip2;
+	
+	public static File mysteriousLand;
+	public static AudioInputStream audioStream3;
+	public static Clip clip3;
+	
+	public static File dangerousForest;
+	public static AudioInputStream audioStream4;
+	public static Clip clip4;
+	
+	public static File cloudySkies;
+	public static AudioInputStream audioStream5;
+	public static Clip clip5;
+	
 	// Images
 	public static BufferedImage menu;
 	public static BufferedImage rules;
@@ -37,14 +52,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static BufferedImage jumpIndicator;
 	public static BufferedImage jumpIndicator2;
 	public static BufferedImage jumpIndicator3;
-	public static BufferedImage trophy;
 	
-	public static File jumpSound;
-	public static AudioInputStream audioStream;
-	public static Clip clip;
-	public static FloatControl gainControl;
-	
-	public static Scanner readFile;
 	public static PrintWriter outputFile;
  
  
@@ -101,7 +109,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	public static rect rect22 = new rect(28, 130, 277, 45);
 	public static rect rect23 = new rect(800, 311, 161, 40);
 	
- 
+	
 	// Levels (Place holders)
 	public static BufferedImage level1;
 	public static BufferedImage level2;
@@ -117,7 +125,8 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	// 2 is level 2
 	// 3 is level 3
 	// 4 is the about page
-	// 5 is the you win screen
+	// 5 is the you win 
+
 	public static int gameState = 0;
  
  
@@ -141,7 +150,6 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			jumpIndicator = ImageIO.read(new File("jumpIndicator2.png"));
 			jumpIndicator2 = ImageIO.read(new File("JumpBar_2.png"));
 			jumpIndicator3 = ImageIO.read(new File("JumpBar_3.png"));
-			trophy = ImageIO.read(new File("trophy.png"));
 		}
 		catch(Exception e) {
 			System.out.println("IMAGE NOT FOUND");
@@ -156,6 +164,31 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	}
  
 	public static void main(String[] args) throws IOException, UnsupportedAudioFileException, LineUnavailableException{
+		jumpSound = new File("jumpSound.wav");
+		audioStream = AudioSystem.getAudioInputStream(jumpSound);
+		clip = AudioSystem.getClip();
+		clip.open(audioStream);
+		
+		menuMusic = new File("menuMusic.wav");
+		audioStream2 = AudioSystem.getAudioInputStream(menuMusic);
+		clip2 = AudioSystem.getClip();
+		clip2.open(audioStream2);
+		
+		mysteriousLand = new File("mysteriousLand.wav");
+		audioStream3 = AudioSystem.getAudioInputStream(mysteriousLand);
+		clip3 = AudioSystem.getClip();
+		clip3.open(audioStream3);
+		
+		dangerousForest = new File("dangerousForest.wav");
+		audioStream4 = AudioSystem.getAudioInputStream(dangerousForest);
+		clip4 = AudioSystem.getClip();
+		clip4.open(audioStream4);
+		
+		cloudySkies = new File("cloudySkies.wav");
+		audioStream5 = AudioSystem.getAudioInputStream(cloudySkies);
+		clip5 = AudioSystem.getClip();
+		clip5.open(audioStream5);
+				
 		JFrame gameWindow = new JFrame("Jump Dude");
 		JumpDude gamePanel = new JumpDude();
 		gameWindow.add(gamePanel);
@@ -163,56 +196,53 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		gameWindow.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		gameWindow.setVisible(true);
 		
-		// Sound
-		jumpSound = new File("jumpSound.wav");
-		audioStream = AudioSystem.getAudioInputStream(jumpSound);
-		clip = AudioSystem.getClip();
-		clip.open(audioStream);
-		
 		// Text file
-		outputFile = new PrintWriter(new FileWriter("highscores.txt", true));
+		outputFile = new PrintWriter(new FileWriter("highscores.txt"));
 		
 		
 	}
 	
-	// gets the top 3 lowest values from the file
-	public static void getTop3() throws FileNotFoundException {
-		readFile = new Scanner(new File("highscores.txt"));
-		int first = 1000000000;
-		int second = 1000000000;
-		int third = 1000000000;
-		
-		while(readFile.hasNextLine()) {
-			int curLine = Integer.parseInt(readFile.nextLine());
-			if(curLine < first && curLine < second && curLine < third) {
-				top3[0] = curLine;
-				first = curLine;
-			}
-			if(curLine < second && curLine < third && curLine > first) {
-				top3[1] = curLine;
-				second = curLine;
-			}
-			if(curLine < third && curLine > second && curLine > first) {
-				top3[2] = curLine;
-				third = curLine;
-			}
+	public static void highScores() {
+		if(gameState == 5) {
+			leaderboardScores = extendIntArr(leaderboardScores, numberOfJumps);
 		}
+		for(int i = 0; i < leaderboardScores.length; i++) {
+			outputFile.println(numberOfJumps);
+		}
+	}
+	
+	public static void getTop3() {
+		int first = 0;
+		int second = 0;
+		int third = 0;
+		for (int i = 0; i < leaderboardScores.length; i++) { 
+			if (leaderboardScores[i] > first) {
+	            third = second;
+	            second = first;
+	            first = leaderboardScores[i];
+        } else if (leaderboardScores[i] > second) {
+            third = second;
+            second = leaderboardScores[i];
+        } else if (leaderboardScores[i] > third) {
+            third = leaderboardScores[i];
+        }
+		}
+		top3[0] = first;
+		top3[1] = second;
+		top3[2] = third;
 
 	}
 	
-	// outputs the highscores on the screen
-	public static void outputHighscores(Graphics g) throws FileNotFoundException {
+	public static void outputHighscores(Graphics g) {
 		getTop3();
 		// Converts to string
-		g.drawString(String.valueOf(top3[0]), 610, 160);
-		g.drawString(String.valueOf(top3[1]), 610, 200);
-		g.drawString(String.valueOf(top3[2]), 610, 240);
-		readFile.close();
+		g.drawString(String.valueOf(top3[0]), 430, 160);
+		g.drawString(String.valueOf(top3[1]), 430, 200);
+		g.drawString(String.valueOf(top3[2]), 430, 240);
 	}
  
-	// Physics
 	public static void updatePlayer() {
-		
+		// Physics
 		if(gameState == 1) {
 			player = new rect(playerX, playerY, 45, 110);
 			collision();
@@ -238,10 +268,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 	 
 				jump = true;
 	 
-	 
 			}
 		}
 		if(gameState == 2) {
+			clip4.start();
 			player = new rect(playerX2, playerY2, 45, 110);
 			collision();
 			jump = false;
@@ -270,6 +300,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
 		}
 		if(gameState == 3) {
+			clip5.start();
 			player = new rect(playerX3, playerY3, 45, 110);
 			collision();
 			jump = false;
@@ -309,13 +340,19 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
  
 		// Menu screen
 		if(gameState == 0) {
+			if(gameState < 1) {
+			clip2.start();
+			}
 			g.drawImage(menu, 0, 0, null);
  
 		}
 		// Level 1
 		if(gameState == 1) {
+			
+			clip3.start();
+
 			// Draw the image of the level
- 
+			
 			g.drawImage(level1, 0, 0, null);
 			g.setColor(new Color(255, 255, 255));
 			g.setFont(new Font("Courier", Font.BOLD, 30));
@@ -377,7 +414,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			g.drawString("Infinite Lives: " + infiniteLives, 510, 40);
 			
 			if(lives <= 0 && infiniteLives == false) {
-				gameState = 0;
+				System.exit(gameState);
 				lives = 3;
 			}
 			
@@ -472,6 +509,10 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			g.drawString("Lives: " + lives, 1027, 100);
 			g.drawString("Infinite Lives: " + infiniteLives, 510, 40);
  
+			if(lives <= 0 && infiniteLives == false) {
+				System.exit(gameState);
+				lives = 3;
+			}
 			
 			// Jumping animations
 			if(jump) {
@@ -527,25 +568,12 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		}
 		if(gameState == 5) {
 			g.drawImage(youWin, 0, 0, null);
-			outputFile.println(numberOfJumps);
-			System.out.println(numberOfJumps);
-			outputFile.close();
 		}
+		
 		if(gameState == 6) {
 			g.setColor(new Color(0,0,0));
-			
 			g.fillRect(0, 0, 1280, 720);
-			g.setColor(new Color(255,255,255));
-			g.setFont(new Font("Courier", Font.BOLD, 50));
-			g.drawString("HIGHSCORES", 490, 50);
-			g.setFont(new Font("Courier", Font.BOLD, 30));
-			g.drawImage(trophy, 0, 0, null);
-			g.drawString("Press 'k'", 575, 700);
-			try {
-				outputHighscores(g);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			outputHighscores(g);
 			
 		}
  
@@ -581,6 +609,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 		
 		// If menu screen 
 		if(gameState == 0) {
+			
 			if(e.getKeyChar() == ' ') {
 				gameState = 1;
 			}
@@ -590,6 +619,7 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			if(e.getKeyChar() == 'a') {
 				gameState = 6;
 			}
+				
 		}
 		else if(gameState == 4) {
 			if(e.getKeyChar() == 'f') {
@@ -597,17 +627,13 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
 		}
 		else if(gameState == 5) {
+			highScores();
 			if(e.getKeyChar() == 't') {
-				gameState = 0;
-			}
-		}
-		else if(gameState == 6) {
-			if(e.getKeyChar() == 'k') {
-				gameState = 0;
+				System.exit(gameState);
 			}
 		}
 		else if(gameState == 1) {
- 
+			clip2.stop(); 
 			System.out.println("X: " + playerX + "| Y: " + playerY);
 			if(e.getKeyChar() == ' ') {
 				System.out.println(jump);
@@ -617,9 +643,9 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 					fallingSpeed = 0;
 					jump = false;
 					fallingSpeed -= 20;
-					numberOfJumps++;
- 
-				}
+					numberOfJumps++;	
+
+				}     
 			}
 			// If 1 is pressed
 			if(e.getKeyCode() == 49) {
@@ -648,10 +674,13 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
  
 		}
 		if(gameState == 2) {
+			clip3.stop(); 
 			System.out.println("X: " + playerX2 + "| Y: " + playerY2);
 			if(e.getKeyChar() == ' ') {
 				System.out.println(jump);
 				if(jump) {
+					clip.setFramePosition(0);
+					clip.start();
 					fallingSpeed = 0;
 					jump = false;
 					fallingSpeed -= 20;
@@ -687,10 +716,13 @@ public class JumpDude extends JPanel implements Runnable, KeyListener{
 			}
 		}
 		if(gameState == 3) {
+			clip4.stop();
 			System.out.println("X: " + playerX3 + "| Y: " + playerY3);
 			if(e.getKeyChar() == ' ') {
 				System.out.println(jump);
 				if(jump) {
+					clip.setFramePosition(0);
+					clip.start();
 					fallingSpeed = 0;
 					jump = false;
 					fallingSpeed -= 20;
